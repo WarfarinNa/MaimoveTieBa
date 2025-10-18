@@ -446,14 +446,12 @@ class TiebaContentAction(BaseAction):
 """
             
             # 使用Generator API生成描述
-            success, reply_set, prompt = await generator_api.generate_response_custom(
+            description = await generator_api.generate_response_custom(
                 chat_stream=self.chat_stream,
                 prompt=description_prompt
             )
             
-            if success and reply_set:
-                description = reply_set
-            else:
+            if not description:
                 # 回退到简单描述
                 description = f"📝 {title}\n\n{content[:100]}{'...' if len(content) > 100 else ''}"
             

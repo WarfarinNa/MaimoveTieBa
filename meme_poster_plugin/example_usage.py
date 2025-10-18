@@ -1,9 +1,9 @@
 """
-插件使用示例
+智能贴吧内容推送系统使用示例
 """
 
 import asyncio
-from meme_poster_plugin import MemePosterAction, MemeDetector, MockTiebaCrawler
+from meme_poster_plugin import TiebaContentAction, MemeDetector, MockTiebaCrawler
 
 
 async def example_basic_usage():

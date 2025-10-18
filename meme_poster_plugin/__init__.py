@@ -1,16 +1,17 @@
 """
-贴吧Meme梗图自动发送插件
+智能贴吧内容推送系统
 """
 
-from .plugin import MemePosterPlugin, MemePosterAction, MemeStatusCommand
+from .plugin import TiebaContentPlugin, TiebaContentAction, TiebaStatusCommand, TiebaConfigCommand
 from .database_models import MemeSendRecords, MemeContentCache, MemeGroupSettings
 from .tieba_crawler import TiebaCrawler, MockTiebaCrawler
 from .meme_detector import MemeDetector, AdvancedMemeDetector
 
 __all__ = [
-    'MemePosterPlugin',
-    'MemePosterAction', 
-    'MemeStatusCommand',
+    'TiebaContentPlugin',
+    'TiebaContentAction', 
+    'TiebaStatusCommand',
+    'TiebaConfigCommand',
     'MemeSendRecords',
     'MemeContentCache',
     'MemeGroupSettings',

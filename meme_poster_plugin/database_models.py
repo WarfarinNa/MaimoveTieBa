@@ -3,7 +3,7 @@ Meme发送插件数据库模型
 """
 
 from peewee import *
-from src.plugin_system.database import BaseModel
+from src.common.database.database_model import BaseModel
 
 
 class MemeSendRecords(BaseModel):
