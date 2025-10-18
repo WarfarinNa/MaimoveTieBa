@@ -687,6 +687,27 @@ class TiebaContentPlugin(BasePlugin):
     python_dependencies = ["aiohttp", "Pillow", "numpy"]
     config_file_name = "config.toml"
     
+    def __init__(self):
+        super().__init__()
+        # 初始化数据库表
+        self._init_database_tables()
+    
+    def _init_database_tables(self):
+        """初始化数据库表"""
+        try:
+            from .database_models import MemeSendRecords, MemeContentCache, MemeGroupSettings
+            
+            # 创建数据库表（如果不存在）
+            MemeSendRecords.create_table(safe=True)
+            MemeContentCache.create_table(safe=True)
+            MemeGroupSettings.create_table(safe=True)
+            
+            print("✅ 贴吧内容推送插件数据库表初始化成功")
+        except Exception as e:
+            print(f"❌ 数据库表初始化失败: {e}")
+            import traceback
+            traceback.print_exc()
+    
     # 配置节描述
     config_section_descriptions = {
         "plugin": "插件基本配置",
