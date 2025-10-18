@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
-  "name": "贴吧Meme梗图自动发送插件",
-  "version": "1.0.0",
-  "description": "自动从百度贴吧获取meme梗图并发送到指定群组的插件",
+  "name": "智能贴吧内容推送系统",
+  "version": "2.0.0",
+  "description": "智能获取贴吧内容，利用LLM进行评价和推送的插件",
   "author": {
     "name": "MaiBot开发者",
     "url": "https://github.com/MaiM-with-u"
@@ -14,8 +14,8 @@
   },
   "homepage_url": "https://github.com/MaiM-with-u",
   "repository_url": "https://github.com/MaiM-with-u/plugin-repo",
-  "keywords": ["贴吧", "meme", "梗图", "自动发送", "定时任务"],
-  "categories": ["Entertainment & Interaction", "External Integration"],
+  "keywords": ["贴吧", "LLM", "智能推送", "内容评价", "多群组", "随机时间"],
+  "categories": ["Entertainment & Interaction", "External Integration", "AI & Machine Learning"],
   "default_locale": "zh-CN",
   "plugin_info": {
     "is_built_in": false,
@@ -23,13 +23,18 @@
     "components": [
       {
         "type": "action",
-        "name": "meme_poster_action",
-        "description": "自动发送贴吧meme梗图"
+        "name": "tieba_content_action",
+        "description": "智能推送贴吧内容"
       },
       {
         "type": "command",
-        "name": "meme_status_command",
-        "description": "查看meme发送状态"
+        "name": "tieba_status_command",
+        "description": "查看贴吧推送状态"
+      },
+      {
+        "type": "command",
+        "name": "tieba_config_command",
+        "description": "管理贴吧推送配置"
       }
     ]
   }

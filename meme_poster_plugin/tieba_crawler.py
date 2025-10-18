@@ -60,6 +60,8 @@ class TiebaCrawler:
                 
         except Exception as e:
             print(f"获取贴吧数据失败: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def _parse_tieba_html(self, html: str) -> List[Dict]:
@@ -97,6 +99,8 @@ class TiebaCrawler:
                 
         except Exception as e:
             print(f"解析HTML失败: {e}")
+            import traceback
+            traceback.print_exc()
         
         return posts
     
@@ -120,6 +124,8 @@ class TiebaCrawler:
                 
         except Exception as e:
             print(f"获取帖子详情失败: {e}")
+            import traceback
+            traceback.print_exc()
             return {}
     
     def _parse_post_detail(self, html: str) -> Dict:
@@ -159,6 +165,8 @@ class TiebaCrawler:
                 
         except Exception as e:
             print(f"解析帖子详情失败: {e}")
+            import traceback
+            traceback.print_exc()
         
         return detail
     
@@ -219,6 +227,8 @@ class TiebaCrawler:
                     return await response.read()
         except Exception as e:
             print(f"下载图片失败: {e}")
+            import traceback
+            traceback.print_exc()
         
         return None
     

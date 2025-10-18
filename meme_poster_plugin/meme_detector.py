@@ -7,9 +7,20 @@ import base64
 import io
 import json
 from typing import List, Dict, Tuple, Optional
-from PIL import Image, ImageDraw, ImageFont
-import numpy as np
 import aiohttp
+
+# 延迟导入，避免模块加载时的内存问题
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
 
 
 class MemeDetector:
@@ -42,6 +53,14 @@ class MemeDetector:
             (是否为meme, 评分, 特征信息)
         """
         try:
+            # 检查依赖是否可用
+            if not PIL_AVAILABLE or not NUMPY_AVAILABLE:
+                # 如果依赖不可用，只进行文本分析
+                text_features = self._extract_text_features(title, content)
+                meme_score = self._calculate_text_only_score(text_features)
+                is_meme = meme_score >= 0.6
+                return is_meme, meme_score, {'text_features': text_features, 'meme_score': meme_score}
+            
             # 加载图片
             image = Image.open(io.BytesIO(image_data))
             
@@ -65,13 +84,27 @@ class MemeDetector:
             
         except Exception as e:
             print(f"Meme检测失败: {e}")
-            return False, 0.0, {}
+            import traceback
+            traceback.print_exc()
+            return False, 0.0, {'error': str(e)}
     
     async def _extract_image_features(self, image: Image.Image) -> Dict:
         """提取图片特征"""
         features = {}
         
         try:
+            # 检查依赖是否可用
+            if not PIL_AVAILABLE or not NUMPY_AVAILABLE:
+                return {
+                    'aspect_ratio': 1.0,
+                    'size': (100, 100),
+                    'color_variance': 0.0,
+                    'brightness': 128.0,
+                    'edge_density': 0.0,
+                    'text_likelihood': 0.0,
+                    'color_diversity': 0
+                }
+            
             # 转换为RGB模式
             if image.mode != 'RGB':
                 image = image.convert('RGB')
@@ -102,6 +135,8 @@ class MemeDetector:
             
         except Exception as e:
             print(f"图片特征提取失败: {e}")
+            import traceback
+            traceback.print_exc()
             features = {
                 'aspect_ratio': 1.0,
                 'size': (100, 100),
@@ -113,6 +148,35 @@ class MemeDetector:
             }
         
         return features
+    
+    def _calculate_text_only_score(self, text_features: Dict) -> float:
+        """仅基于文本特征计算meme评分"""
+        score = 0.0
+        
+        # 关键词评分
+        keyword_score = min(text_features['meme_keyword_count'] * 0.3, 0.6)
+        score += keyword_score
+        
+        # 感叹号评分
+        exclamation_score = min(text_features['exclamation_count'] * 0.1, 0.2)
+        score += exclamation_score
+        
+        # 笑声模式评分
+        laugh_score = min(text_features['laugh_patterns'] * 0.15, 0.3)
+        score += laugh_score
+        
+        # 表情符号评分
+        if text_features['has_emoji']:
+            score += 0.1
+        
+        return min(score, 1.0)
+    
+    def _create_simple_image_data(self) -> bytes:
+        """创建简单的图片数据（当PIL不可用时）"""
+        # 创建一个简单的PNG图片数据（1x1像素的红色图片）
+        # 这是一个最小的PNG文件头
+        png_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82'
+        return png_data
     
     def _extract_text_features(self, title: str, content: str) -> Dict:
         """提取文本特征"""
@@ -182,9 +246,52 @@ class MemeDetector:
         
         return min(total_score, 1.0)
     
+    async def is_meme_content(self, post: Dict, keywords: List[str] = None) -> Tuple[bool, float]:
+        """
+        简化的meme内容检测（避免复杂的图片处理）
+        
+        Args:
+            post: 帖子信息
+            keywords: meme关键词列表
+            
+        Returns:
+            (是否为meme, 评分)
+        """
+        if keywords is None:
+            keywords = self.meme_keywords
+        
+        title = post.get('title', '').lower()
+        content = post.get('content', '').lower()
+        
+        # 提取文本特征
+        text_features = self._extract_text_features(title, content)
+        
+        # 计算评分
+        meme_score = self._calculate_text_only_score(text_features)
+        
+        # 图片数量加分
+        image_count = len(post.get('images', []))
+        if image_count > 0:
+            meme_score += min(image_count * 0.1, 0.3)
+        
+        # 回复数加分（热门帖子更可能是meme）
+        reply_count = post.get('reply_count', 0)
+        if reply_count > 0:
+            meme_score += min(reply_count * 0.01, 0.1)
+        
+        # 判断是否为meme
+        is_meme = meme_score >= 0.6
+        
+        return is_meme, min(meme_score, 1.0)
+    
     async def create_mock_meme_image(self, title: str = "Meme图片") -> bytes:
         """创建模拟meme图片"""
         try:
+            # 检查PIL是否可用
+            if not PIL_AVAILABLE:
+                # 如果PIL不可用，返回一个简单的纯色图片数据
+                return self._create_simple_image_data()
+            
             # 创建图片
             width, height = 400, 300
             image = Image.new('RGB', (width, height), color=(255, 255, 255))
