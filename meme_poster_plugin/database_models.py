@@ -26,7 +26,7 @@ class MemeSendRecords(BaseModel):
     error_message = TextField(null=True, help_text="错误信息")
     
     # 时间戳
-    created_at = DateTimeField(auto_now_add=True, help_text="创建时间")
+    created_at = DateTimeField(help_text="创建时间")
     
     class Meta:
         table_name = 'meme_send_records'
@@ -62,8 +62,8 @@ class MemeContentCache(BaseModel):
     last_send_time = DateTimeField(null=True, help_text="最后发送时间")
     
     # 时间戳
-    created_at = DateTimeField(auto_now_add=True, help_text="创建时间")
-    updated_at = DateTimeField(auto_now=True, help_text="更新时间")
+    created_at = DateTimeField(help_text="创建时间")
+    updated_at = DateTimeField(help_text="更新时间")
     
     class Meta:
         table_name = 'meme_content_cache'
@@ -97,8 +97,8 @@ class MemeGroupSettings(BaseModel):
     active_hours = TextField(null=True, help_text="活跃时间段（JSON格式）")
     
     # 时间戳
-    created_at = DateTimeField(auto_now_add=True, help_text="创建时间")
-    updated_at = DateTimeField(auto_now=True, help_text="更新时间")
+    created_at = DateTimeField(help_text="创建时间")
+    updated_at = DateTimeField(help_text="更新时间")
     
     class Meta:
         table_name = 'meme_group_settings'
