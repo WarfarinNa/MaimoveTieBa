@@ -57,6 +57,9 @@ class TiebaContentAction(BaseAction):
     async def execute(self) -> Tuple[bool, str]:
         """执行智能贴吧内容推送"""
         try:
+            # 确保数据库表存在
+            self._ensure_database_tables()
+            
             # 检查是否启用插件
             if not self.get_config("plugin.enabled", False):
                 return False, "插件未启用"
@@ -507,6 +510,9 @@ class TiebaStatusCommand(BaseCommand):
     async def execute(self) -> Tuple[bool, str, bool]:
         """执行状态查询"""
         try:
+            # 确保数据库表存在
+            self._ensure_database_tables()
+            
             # 检查是否启用插件
             if not self.get_config("plugin.enabled", False):
                 await self.send_text("❌ 贴吧内容推送插件未启用")
@@ -686,6 +692,22 @@ class TiebaContentPlugin(BasePlugin):
     dependencies = []
     python_dependencies = ["aiohttp", "Pillow", "numpy"]
     config_file_name = "config.toml"
+    
+    def _ensure_database_tables(self):
+        """确保数据库表存在（懒加载初始化）"""
+        try:
+            from .database_models import MemeSendRecords, MemeContentCache, MemeGroupSettings
+            
+            # 创建数据库表（如果不存在）
+            MemeSendRecords.create_table(safe=True)
+            MemeContentCache.create_table(safe=True)
+            MemeGroupSettings.create_table(safe=True)
+            
+            print("✅ 贴吧内容推送插件数据库表初始化成功")
+        except Exception as e:
+            print(f"❌ 数据库表初始化失败: {e}")
+            import traceback
+            traceback.print_exc()
     
     # 配置节描述
     config_section_descriptions = {
