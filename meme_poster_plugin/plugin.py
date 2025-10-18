@@ -22,11 +22,14 @@ from src.plugin_system import (
     ComponentInfo, ActionActivationType, ChatMode, ConfigField
 )
 from src.plugin_system.apis import database_api, llm_api, generator_api
+from src.common.database.database_model import ActionRecords, Messages
 
 # 导入自定义模块
 from .tieba_crawler import TiebaCrawler, MockTiebaCrawler
 from .meme_detector import MemeDetector, AdvancedMemeDetector
-from .database_models import MemeSendRecords, MemeContentCache, MemeGroupSettings
+
+
+# 移除自定义数据库表初始化，使用系统预定义的数据库模型
 
 
 class TiebaContentAction(BaseAction):
@@ -57,9 +60,6 @@ class TiebaContentAction(BaseAction):
     async def execute(self) -> Tuple[bool, str]:
         """执行智能贴吧内容推送"""
         try:
-            # 确保数据库表存在
-            self._ensure_database_tables()
-            
             # 检查是否启用插件
             if not self.get_config("plugin.enabled", False):
                 return False, "插件未启用"
@@ -112,13 +112,14 @@ class TiebaContentAction(BaseAction):
     async def _check_daily_limit(self) -> bool:
         """检查今日发送次数限制"""
         try:
-            today = datetime.now().strftime("%Y-%m-%d")
+            # 使用ActionRecords查询今日执行次数
+            today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
             count = await database_api.db_query(
-                MemeSendRecords,
+                ActionRecords,
                 query_type="count",
                 filters={
-                    "group_id": self.group_id,
-                    "send_date": today
+                    "action_name": "tieba_content_action",
+                    "time": {"$gte": today_start}
                 }
             )
             max_daily = self.get_config("posting.max_daily_sends", 3)
@@ -480,21 +481,22 @@ class TiebaContentAction(BaseAction):
     async def _record_send_count(self, post: Dict):
         """记录发送次数"""
         try:
-            today = datetime.now().strftime("%Y-%m-%d")
-            await database_api.db_query(
-                MemeSendRecords,
-                data={
-                    "group_id": self.group_id,
-                    "group_name": self.group_name,
-                    "send_date": today,
-                    "send_time": datetime.now().isoformat(),
+            # 使用ActionRecords记录动作执行信息
+            await database_api.store_action_info(
+                chat_stream=self.chat_stream,
+                action_build_into_prompt=False,
+                action_prompt_display=f"推送贴吧内容: {post.get('title', '未知标题')}",
+                action_done=True,
+                thinking_id="",
+                action_data={
                     "post_title": post.get('title', '未知标题'),
                     "post_content": post.get('content', ''),
                     "post_author": post.get('author', '未知作者'),
                     "image_count": len(post.get('images', [])),
-                    "send_success": True
+                    "group_id": self.group_id,
+                    "group_name": self.group_name
                 },
-                query_type="create"
+                action_name="tieba_content_action"
             )
         except Exception as e:
             print(f"记录发送次数失败: {e}")
@@ -510,9 +512,6 @@ class TiebaStatusCommand(BaseCommand):
     async def execute(self) -> Tuple[bool, str, bool]:
         """执行状态查询"""
         try:
-            # 确保数据库表存在
-            self._ensure_database_tables()
-            
             # 检查是否启用插件
             if not self.get_config("plugin.enabled", False):
                 await self.send_text("❌ 贴吧内容推送插件未启用")
@@ -523,14 +522,14 @@ class TiebaStatusCommand(BaseCommand):
             group_name = getattr(self, 'group_name', '未知群组')
             
             # 获取今日发送次数
-            today = datetime.now().strftime("%Y-%m-%d")
             try:
+                today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
                 today_count = await database_api.db_query(
-                    MemeSendRecords,
+                    ActionRecords,
                     query_type="count",
                     filters={
-                        "group_id": group_id,
-                        "send_date": today
+                        "action_name": "tieba_content_action",
+                        "time": {"$gte": today_start}
                     }
                 )
             except Exception as e:
@@ -692,22 +691,6 @@ class TiebaContentPlugin(BasePlugin):
     dependencies = []
     python_dependencies = ["aiohttp", "Pillow", "numpy"]
     config_file_name = "config.toml"
-    
-    def _ensure_database_tables(self):
-        """确保数据库表存在（懒加载初始化）"""
-        try:
-            from .database_models import MemeSendRecords, MemeContentCache, MemeGroupSettings
-            
-            # 创建数据库表（如果不存在）
-            MemeSendRecords.create_table(safe=True)
-            MemeContentCache.create_table(safe=True)
-            MemeGroupSettings.create_table(safe=True)
-            
-            print("✅ 贴吧内容推送插件数据库表初始化成功")
-        except Exception as e:
-            print(f"❌ 数据库表初始化失败: {e}")
-            import traceback
-            traceback.print_exc()
     
     # 配置节描述
     config_section_descriptions = {
