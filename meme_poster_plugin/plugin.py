@@ -512,16 +512,24 @@ class TiebaStatusCommand(BaseCommand):
                 await self.send_text("❌ 贴吧内容推送插件未启用")
                 return True, "插件未启用", True
             
+            # 获取群组信息（从消息中获取）
+            group_id = getattr(self, 'group_id', 'unknown')
+            group_name = getattr(self, 'group_name', '未知群组')
+            
             # 获取今日发送次数
             today = datetime.now().strftime("%Y-%m-%d")
-            today_count = await database_api.db_query(
-                MemeSendRecords,
-                query_type="count",
-                filters={
-                    "group_id": self.group_id,
-                    "send_date": today
-                }
-            )
+            try:
+                today_count = await database_api.db_query(
+                    MemeSendRecords,
+                    query_type="count",
+                    filters={
+                        "group_id": group_id,
+                        "send_date": today
+                    }
+                )
+            except Exception as e:
+                print(f"获取发送次数失败: {e}")
+                today_count = 0
             
             # 获取配置信息
             max_daily = self.get_config("posting.max_daily_sends", 3)
@@ -532,7 +540,7 @@ class TiebaStatusCommand(BaseCommand):
             # 构建状态消息
             status_message = f"""📊 **贴吧内容推送状态报告**
 
-🏷️ **群组**: {self.group_name}
+🏷️ **群组**: {group_name}
 📅 **日期**: {today}
 📈 **今日发送**: {today_count}/{max_daily}
 🎯 **目标贴吧**: {', '.join(tieba_list)}
@@ -566,7 +574,13 @@ class TiebaConfigCommand(BaseCommand):
         """执行配置管理"""
         try:
             action = self.matched_groups.get("action", "").lower()
-            param = self.matched_groups.get("param", "").strip()
+            param = self.matched_groups.get("param")
+            
+            # 安全处理param参数
+            if param is not None:
+                param = param.strip()
+            else:
+                param = ""
             
             if action == "list":
                 return await self._list_config()
