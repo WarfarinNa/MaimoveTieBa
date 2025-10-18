@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "name": "贴吧Meme梗图自动发送插件",
+  "version": "1.0.0",
+  "description": "自动从百度贴吧获取meme梗图并发送到指定群组的插件",
+  "author": {
+    "name": "MaiBot开发者",
+    "url": "https://github.com/MaiM-with-u"
+  },
+  "license": "MIT",
+  "host_application": {
+    "min_version": "0.7.0",
+    "max_version": "1.0.0"
+  },
+  "homepage_url": "https://github.com/MaiM-with-u",
+  "repository_url": "https://github.com/MaiM-with-u/plugin-repo",
+  "keywords": ["贴吧", "meme", "梗图", "自动发送", "定时任务"],
+  "categories": ["Entertainment & Interaction", "External Integration"],
+  "default_locale": "zh-CN",
+  "plugin_info": {
+    "is_built_in": false,
+    "plugin_type": "general",
+    "components": [
+      {
+        "type": "action",
+        "name": "meme_poster_action",
+        "description": "自动发送贴吧meme梗图"
+      },
+      {
+        "type": "command",
+        "name": "meme_status_command",
+        "description": "查看meme发送状态"
+      }
+    ]
+  }
+}

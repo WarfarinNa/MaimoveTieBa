@@ -1,0 +1,17 @@
+# 贴吧Meme梗图自动发送插件依赖
+
+# 网络请求
+aiohttp>=3.8.0
+
+# 图像处理
+Pillow>=9.0.0
+
+# 数值计算
+numpy>=1.21.0
+
+# 可选：AI模型支持
+openai>=1.0.0  # 用于高级meme检测
+
+# 可选：更好的HTML解析
+beautifulsoup4>=4.10.0  # 用于更robust的HTML解析
+lxml>=4.6.0  # BeautifulSoup的解析器
